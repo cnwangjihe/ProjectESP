@@ -15,10 +15,11 @@ const uint16_t RemotePort = 5555,
 const uint32_t mogic = 0xDEADBEEF;
 WiFiUDP udp;
 unsigned long st;
-uint8_t lraw[5];
-uint8_t spi_buffer[600];
+uint8_t lraw[5], tmp[5];
+uint8_t spi_buffer[20000];
 uint8_t tlen;
 uint16_t len;
+uint64_t ss,sst;
 
 void WifiSetup()
 {
@@ -38,17 +39,22 @@ void setup()
   pinMode(5,OUTPUT);
   digitalWrite(5,LOW);
   pinMode(4,INPUT);
-  Serial.setRxBufferSize(1024);
-  Serial.begin(115200);
+  // Serial.setRxBufferSize(1024);
+  Serial.begin(1152000);
   SPI.begin();
+  SPI.beginTransaction(SPISettings(40000000, MSBFIRST, SPI_MODE0));
   WifiSetup();
   digitalWrite(5,HIGH);
+  Serial.println(ESP.getCpuFreqMHz());
 }
 
 bool Send(uint8_t *data, uint16_t len)
 {
   if (WiFi.status() != WL_CONNECTED)
+  {
+    Serial.println(WiFi.status());
     return false;
+  }
   udp.beginPacket(RemoteIP,RemotePort);
   udp.write(data,len);
   return udp.endPacket();
@@ -69,10 +75,19 @@ inline bool check_parity(uint16_t raw)
 
 void loop()
 {
+  // Serial.printf("SW:%llu\n",micros64()-sst);
+  // sst = micros64();
   tlen = Serial.readBytesUntil(0xFF,lraw,4); // packge len is 8*n+(2/3), 0xFF is not a valid len
-  // Serial.printf("Receive something:%d\n",tlen);
   if (tlen!=2)
     return ;
+  // Serial.printf("Receive something:%d\n",tlen);
+  if (Serial.available() > 0 &&  Serial.peek() == 0xFE)
+  {
+    Serial.printf("@@@@@@@@%d:%d@@@@@@@@",Serial.available(),Serial.peek());
+    Serial.println("throw!");
+    Serial.readBytes(tmp,1);
+    return ;
+  }
   len = lraw[0] + (lraw[1] << 8);
   // Serial.printf("Get len:%d\n",len);
   if ( !check_parity(len) ) // 3bit parity check
@@ -84,14 +99,27 @@ void loop()
   digitalWrite(5,LOW);
   // Serial.print(digitalRead(4));
   // Serial.printf("handshake pull down\n");
+  // ss = micros64();
   while (digitalRead(4)==LOW)
     yield();
+  // Serial.printf("GPIO:%llu\n",micros64()-ss);
   // Serial.printf("notify got\n");
+  // ss = micros64();
   SPI.transfer(spi_buffer,len);
+  // Serial.printf("SPI:%llu\n",micros64()-ss);
   // Serial.printf("spi done\n");
   // Serial.printf("handshake pull up\n");
+  // ss = micros64();
+  // for (int i=0;i<20;i++)
+  // {
   Send(spi_buffer,len);
-  spi_buffer[len]='\0';
-  Serial.print((char *)spi_buffer);
+    // yield();
+  // }
+  // Serial.printf("SND:%llu\n",micros64()-ss);
+  // Serial.printf("%lu\n",millis());
+  // spi_buffer[len]='\0';
+  // Serial.print((char *)spi_buffer);
   digitalWrite(5,HIGH);
+  // Serial.printf("SUM:%llu\n",micros64()-sst);
+  // sst = micros64();
 }

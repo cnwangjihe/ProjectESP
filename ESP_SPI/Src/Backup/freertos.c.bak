@@ -28,6 +28,8 @@
 /* USER CODE BEGIN Includes */
 #include "ESP.h"
 #include "retarget.h"
+#include <stdlib.h>
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -47,7 +49,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-
+uint8_t raw[600];
 /* USER CODE END Variables */
 osThreadId MainTaskHandle;
 
@@ -84,7 +86,6 @@ void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackTy
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
   RetargetInit();
-  ESPInit();
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -125,11 +126,21 @@ void StartMainTask(void const * argument)
 {
   /* USER CODE BEGIN StartMainTask */
   /* Infinite loop */
-  uint8_t raw[] = {'a','b','c','d','e','f','g','h','i','j'};
+  // uint8_t raw[] = {'a','b','c','d','e','f','g','h','i','j'};
+  uint32_t count = 0;
+  uint16_t cnt = 0;
+  ESPInit();
+  memset(raw,0xEE,sizeof(raw));
+  itm_printf("^Start^\n");
   for(;;)
   {
-    ESPSend(raw,sizeof(raw));
-    osDelay(100);
+    ESPSend(raw,506);
+    if (++count > 20723)
+    {
+      itm_printf("^Got%d^\n",cnt);
+      count = 0;
+    }
+    // osDelay(1);
   }
   /* USER CODE END StartMainTask */
 }

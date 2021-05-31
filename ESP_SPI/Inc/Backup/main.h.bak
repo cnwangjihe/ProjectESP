@@ -72,6 +72,8 @@ void Error_Handler(void);
 #define LED1_Pin GPIO_PIN_10
 #define LED1_GPIO_Port GPIOF
 /* USER CODE BEGIN Private defines */
+#define MAX(a,b) ((a) > (b) ? (a) : (b))
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
 #define ITMassert(x,y) if ((x) == 0) {printf("%s",(y));}
 #define DEBUG
 #ifdef DEBUG
