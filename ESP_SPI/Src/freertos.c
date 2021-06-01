@@ -127,14 +127,14 @@ void StartMainTask(void const * argument)
   /* USER CODE BEGIN StartMainTask */
   /* Infinite loop */
   // uint8_t raw[] = {'a','b','c','d','e','f','g','h','i','j'};
-  uint32_t count = 0;
+  uint16_t count = 0;
   uint16_t cnt = 0;
   ESPInit();
   memset(raw,0xEE,sizeof(raw));
   itm_printf("^Start^\n");
   for(;;)
   {
-    ESPSend(raw,426+(count%10)*8);
+    ESPSend(raw,506);
     if (++count == 20720)
     {
       itm_printf("^Got%d^\n",cnt++);

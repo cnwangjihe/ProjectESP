@@ -30,16 +30,18 @@ uint16_t ESPCalcParity(uint16_t len)
 uint8_t ESPSend(uint8_t *raw,size_t len)
 {
     if (ESPState == ESP_NRST)
+    {
         ESPInit();
-    if (ESPState == ESP_NRST)
-        return ESP_FAIL;
+        if (ESPState == ESP_NRST)
+            return ESP_FAIL;
+    }
     ESPTaskHandle = xTaskGetCurrentTaskHandle();
     len = ESPCalcParity(len);
     *((uint16_t *)lraw) = len;
     ESPState = ESP_SLEN;
     HAL_UART_Transmit(&espuart,lraw,3,300);
     // itm_printf("UART?\n");
-    if (ulTaskNotifyTake(pdTRUE,pdMS_TO_TICKS(8000)) == pdFALSE)
+    if (ulTaskNotifyTake(pdTRUE,pdMS_TO_TICKS(500)) == pdFALSE)
         return ESPClear(),ESP_FAIL;
     fails = MAX(0,fails-2);
     // itm_printf("UART!\n");
@@ -47,7 +49,7 @@ uint8_t ESPSend(uint8_t *raw,size_t len)
     HAL_SPI_Transmit_DMA(&espspi,raw,len);
     HAL_GPIO_WritePin(ESP_notify_GPIO_Port,ESP_notify_Pin,GPIO_PIN_SET);
     // itm_printf("SPI?\n");
-    if (ulTaskNotifyTake(pdTRUE,pdMS_TO_TICKS(8000)) == pdFALSE)
+    if (ulTaskNotifyTake(pdTRUE,pdMS_TO_TICKS(500)) == pdFALSE)
         return ESPInit(),ESP_FAIL;
     // itm_printf("SPI!\n");
     HAL_GPIO_WritePin(ESP_notify_GPIO_Port,ESP_notify_Pin,GPIO_PIN_RESET);

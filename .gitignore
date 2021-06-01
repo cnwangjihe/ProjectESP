@@ -1,3 +1,5 @@
 */.pio
 */.vscode
-*/Backup
+**/Backup
+*.bak
+

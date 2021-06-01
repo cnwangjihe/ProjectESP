@@ -9,7 +9,7 @@
 #define ESP_SLEN 3
 #define ESP_SSPI 4
 
-#define ESP_MAX_FAIL 15
+#define ESP_MAX_FAIL 50
 #define ESP_FAIL 0
 #define ESP_OK 1
 

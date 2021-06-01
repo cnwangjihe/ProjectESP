@@ -127,7 +127,7 @@ void StartMainTask(void const * argument)
   /* USER CODE BEGIN StartMainTask */
   /* Infinite loop */
   // uint8_t raw[] = {'a','b','c','d','e','f','g','h','i','j'};
-  uint32_t count = 0;
+  uint16_t count = 0;
   uint16_t cnt = 0;
   ESPInit();
   memset(raw,0xEE,sizeof(raw));
@@ -135,9 +135,9 @@ void StartMainTask(void const * argument)
   for(;;)
   {
     ESPSend(raw,506);
-    if (++count > 20723)
+    if (++count == 20720)
     {
-      itm_printf("^Got%d^\n",cnt);
+      itm_printf("^Got%d^\n",cnt++);
       count = 0;
     }
     // osDelay(1);
