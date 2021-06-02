@@ -28,6 +28,8 @@
 /* USER CODE BEGIN Includes */
 #include "ESP.h"
 #include "retarget.h"
+#include "message_buffer.h"
+#include "usart.h"
 #include <stdlib.h>
 #include <string.h>
 /* USER CODE END Includes */
@@ -50,8 +52,10 @@
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
 uint8_t raw[600];
+MessageBufferHandle_t ReceiveQueueHandle;
 /* USER CODE END Variables */
 osThreadId MainTaskHandle;
+osThreadId UDPReceiveHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -59,6 +63,7 @@ osThreadId MainTaskHandle;
 /* USER CODE END FunctionPrototypes */
 
 void StartMainTask(void const * argument);
+void StartUDPReceive(void const * argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -101,13 +106,17 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END RTOS_TIMERS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
-  
+  ReceiveQueueHandle = xMessageBufferCreate(UART_BUF_SIZE * 8);
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
   /* definition and creation of MainTask */
   osThreadDef(MainTask, StartMainTask, osPriorityNormal, 0, 128);
   MainTaskHandle = osThreadCreate(osThread(MainTask), NULL);
+
+  /* definition and creation of UDPReceive */
+  osThreadDef(UDPReceive, StartUDPReceive, osPriorityAboveNormal, 0, 128);
+  UDPReceiveHandle = osThreadCreate(osThread(UDPReceive), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -130,6 +139,7 @@ void StartMainTask(void const * argument)
   uint16_t count = 0;
   uint16_t cnt = 0;
   ESPInit();
+  __HAL_UART_ENABLE_IT(&huart1, UART_IT_RXNE);
   memset(raw,0xEE,sizeof(raw));
   itm_printf("^Start^\n");
   for(;;)
@@ -143,6 +153,27 @@ void StartMainTask(void const * argument)
     // osDelay(1);
   }
   /* USER CODE END StartMainTask */
+}
+
+/* USER CODE BEGIN Header_StartUDPReceive */
+/**
+* @brief Function implementing the UDPReceive thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartUDPReceive */
+void StartUDPReceive(void const * argument)
+{
+  /* USER CODE BEGIN StartUDPReceive */
+  /* Infinite loop */
+  uint8_t *raw = pvPortMalloc(UART_BUF_SIZE);
+  size_t rlen;
+  for(;;)
+  {
+    rlen = xMessageBufferReceive(ReceiveQueueHandle,raw,UART_BUF_SIZE,portMAX_DELAY);
+    itm_printf("Got:#%.*s#\n",rlen,raw);
+  }
+  /* USER CODE END StartUDPReceive */
 }
 
 /* Private application code --------------------------------------------------*/

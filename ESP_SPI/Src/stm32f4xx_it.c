@@ -23,6 +23,10 @@
 #include "stm32f4xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "FreeRTOS.h"
+#include "task.h"
+#include "cmsis_os.h"
+#include "message_buffer.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -42,7 +46,10 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-
+extern MessageBufferHandle_t ReceiveQueueHandle;
+uint8_t pbgn = 0, pend = 0;
+size_t BufferLen = 0;
+uint8_t Buffer[UART_BUF_SIZE];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -57,6 +64,7 @@
 
 /* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef hdma_spi1_tx;
+extern UART_HandleTypeDef huart1;
 extern TIM_HandleTypeDef htim6;
 
 /* USER CODE BEGIN EV */
@@ -173,6 +181,45 @@ void EXTI3_IRQHandler(void)
   /* USER CODE BEGIN EXTI3_IRQn 1 */
 
   /* USER CODE END EXTI3_IRQn 1 */
+}
+
+/**
+  * @brief This function handles USART1 global interrupt.
+  */
+void USART1_IRQHandler(void)
+{
+  /* USER CODE BEGIN USART1_IRQn 0 */
+  if ((__HAL_UART_GET_FLAG(&huart1, UART_FLAG_RXNE) != RESET))
+  {
+    if (BufferLen == UART_BUF_SIZE)
+    {
+      BufferLen = 0; // drop
+      itm_printf("Received line tooooooo looooong\n");
+      __HAL_UART_CLEAR_FLAG(&huart1, UART_FLAG_RXNE);
+      return ;
+    }
+    BaseType_t Woken = pdFALSE;
+    uint8_t v = (uint8_t)(huart1.Instance->DR & (uint8_t)0x00FF);
+    if (pbgn < 4)
+      pbgn = (v == UART_BEGIN[pbgn]) ? pbgn+1 : (v == UART_BEGIN[0]);
+    else if (pbgn == 4)
+    {
+      Buffer[BufferLen++] = v;
+      pend = (v == UART_END[pend]) ? pend+1 : (v == UART_END[0]);
+      if (pend == 2)
+      {
+        xMessageBufferSendFromISR(ReceiveQueueHandle, Buffer, BufferLen-2, &Woken);
+        BufferLen = pend = 0;
+      }
+    }
+    portYIELD_FROM_ISR(Woken);
+    return ;
+  }
+  /* USER CODE END USART1_IRQn 0 */
+  HAL_UART_IRQHandler(&huart1);
+  /* USER CODE BEGIN USART1_IRQn 1 */
+
+  /* USER CODE END USART1_IRQn 1 */
 }
 
 /**

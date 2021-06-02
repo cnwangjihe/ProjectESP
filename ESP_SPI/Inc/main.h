@@ -72,6 +72,10 @@ void Error_Handler(void);
 #define LED1_Pin GPIO_PIN_10
 #define LED1_GPIO_Port GPIOF
 /* USER CODE BEGIN Private defines */
+#define UART_BUF_SIZE 0x300
+#define UART_BEGIN "\xDE\xAD\xBE\xEF"
+#define UART_END "\xED\xF4"
+
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 #define ITMassert(x,y) if ((x) == 0) {printf("%s",(y));}
