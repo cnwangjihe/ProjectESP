@@ -55,7 +55,7 @@ void setup()
   Serial.begin(1152000);
   Serial1.begin(115200);
   SPI.begin();
-  SPI.beginTransaction(SPISettings(40000000, MSBFIRST, SPI_MODE0));
+  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
   WifiSetup();
   digitalWrite(5,HIGH);
   // Serial1.println(ESP.getCpuFreqMHz());
@@ -121,9 +121,9 @@ void loop()
   // Serial1.printf("spi done\n");
   // Serial1.printf("handshake pull up\n");
   // ss = micros64();
-  // for (int i=0;i<20;i++)
+  // for (int i=0;i<3;i++)
   // {
-  Send(spi_buffer,len);
+    Send(spi_buffer,len);
     // yield();
   // }
   // Serial1.printf("SND:%llu\n",micros64()-ss);

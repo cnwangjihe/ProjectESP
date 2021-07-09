@@ -141,6 +141,8 @@ void StartMainTask(void const * argument)
   ESPInit();
   __HAL_UART_ENABLE_IT(&huart1, UART_IT_RXNE);
   memset(raw,0xEE,sizeof(raw));
+  raw[0]='\x01';
+  raw[1]='\x02';
   itm_printf("^Start^\n");
   for(;;)
   {
